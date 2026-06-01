@@ -1,0 +1,689 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>QBem · Pessoas & Cultura</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Plus+Jakarta+Sans:wght@500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<style>
+:root {
+  --navy:       #0f2a35;
+  --navy-2:     #163444;
+  --green:      #00bf5a;
+  --green-dim:  #00a84f;
+  --green-glow: rgba(0,191,90,0.12);
+  --green-pale: rgba(0,191,90,0.06);
+  --bg:         #f6f8f7;
+  --surface:    #ffffff;
+  --surface-2:  #f9fbfa;
+  --border:     rgba(0,0,0,0.07);
+  --border-2:   rgba(0,0,0,0.11);
+  --text-1:     #0d1f2d;
+  --text-2:     #4a5e6a;
+  --text-3:     #8fa4af;
+  --radius-sm:  6px;
+  --radius:     10px;
+  --radius-lg:  14px;
+  --radius-xl:  20px;
+  --sidebar-w:  232px;
+  --shadow-lg:  0 8px 32px rgba(0,0,0,0.12);
+  --font-d: 'Plus Jakarta Sans', sans-serif;
+  --font-b: 'Inter', sans-serif;
+  --ceo:    #5b21b6;
+  --tech:   #0d5c3a;
+  --tronco: #065f6b;
+  --gestao: #7c2d12;
+}
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { -webkit-font-smoothing: antialiased; }
+body { font-family: var(--font-b); background: var(--bg); color: var(--text-1); display: flex; min-height: 100vh; font-size: 14px; }
+::-webkit-scrollbar { width: 4px; } ::-webkit-scrollbar-thumb { background: var(--border-2); border-radius: 99px; }
+
+#sidebar { width: var(--sidebar-w); background: var(--navy); display: flex; flex-direction: column; position: fixed; top: 0; left: 0; bottom: 0; z-index: 100; }
+.sb-logo { padding: 22px 18px 18px; border-bottom: 1px solid rgba(255,255,255,0.06); display: flex; align-items: center; gap: 10px; }
+.sb-logo-mark { width: 30px; height: 30px; background: var(--green); border-radius: 8px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+.sb-logo-mark svg { width: 16px; height: 16px; }
+.sb-logo-name { font-family: var(--font-d); font-size: 14px; font-weight: 600; color: #fff; }
+.sb-logo-sub  { font-size: 10px; color: rgba(255,255,255,0.35); letter-spacing: 0.06em; text-transform: uppercase; }
+.sb-section { padding: 18px 12px 4px; font-size: 10px; font-weight: 600; letter-spacing: 0.09em; text-transform: uppercase; color: rgba(255,255,255,0.25); }
+.sb-nav { flex: 1; overflow-y: auto; padding: 6px 0 12px; }
+.nav-btn { display: flex; align-items: center; gap: 9px; width: calc(100% - 16px); margin: 1px 8px; padding: 8px 10px; background: none; border: none; cursor: pointer; border-radius: var(--radius-sm); color: rgba(255,255,255,0.45); font-size: 13px; font-family: var(--font-b); transition: all 0.15s; text-align: left; }
+.nav-btn:hover { background: rgba(255,255,255,0.06); color: rgba(255,255,255,0.85); }
+.nav-btn.active { background: rgba(0,191,90,0.15); color: #fff; }
+.nav-btn.active .nb-icon { color: var(--green); opacity: 1; }
+.nb-icon { width: 16px; height: 16px; flex-shrink: 0; opacity: 0.6; }
+.sb-user { border-top: 1px solid rgba(255,255,255,0.06); padding: 12px 14px; display: flex; align-items: center; gap: 9px; }
+.sb-avatar { width: 30px; height: 30px; border-radius: 50%; background: var(--green); color: #fff; display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 600; flex-shrink: 0; }
+.sb-user-name { color: rgba(255,255,255,0.85); font-size: 12.5px; font-weight: 500; }
+.sb-user-sub  { color: rgba(255,255,255,0.3); font-size: 11px; }
+
+#main { margin-left: var(--sidebar-w); flex: 1; min-height: 100vh; }
+.topbar { height: 50px; background: var(--surface); border-bottom: 1px solid var(--border); display: flex; align-items: center; padding: 0 28px; gap: 6px; font-size: 12.5px; color: var(--text-3); position: sticky; top: 0; z-index: 50; }
+.topbar-link { color: var(--green); cursor: pointer; font-weight: 500; }
+.topbar-sep  { color: var(--border-2); }
+.page { display: none; padding: 28px; }
+.page.active { display: block; }
+.page-hd { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 26px; }
+.page-title { font-family: var(--font-d); font-size: 20px; font-weight: 600; }
+.page-sub   { font-size: 12.5px; color: var(--text-3); margin-top: 3px; }
+
+.btn { display: inline-flex; align-items: center; gap: 6px; padding: 8px 15px; border-radius: var(--radius); font-size: 13px; font-weight: 500; font-family: var(--font-b); cursor: pointer; border: none; transition: all 0.15s; white-space: nowrap; }
+.btn-primary { background: var(--green); color: #fff; }
+.btn-primary:hover { background: var(--green-dim); box-shadow: 0 0 0 4px var(--green-glow); }
+.btn-ghost { background: var(--surface); color: var(--text-2); border: 1px solid var(--border-2); }
+.btn-ghost:hover { background: var(--surface-2); }
+.btn-danger-ghost { background: transparent; color: #dc2626; border: 1px solid #fecaca; }
+.btn-danger-ghost:hover { background: #fef2f2; }
+.btn-sm { padding: 5px 10px; font-size: 12px; }
+.btn-icon-sm  { padding: 5px 7px; border-radius: var(--radius-sm); font-size: 12px; cursor: pointer; border: 1px solid var(--border-2); background: transparent; color: var(--text-3); transition: all 0.15s; }
+.btn-icon-sm:hover  { border-color: var(--green); color: var(--green); }
+.btn-icon-del { padding: 5px 7px; border-radius: var(--radius-sm); font-size: 12px; cursor: pointer; border: 1px solid #fecaca; background: transparent; color: #dc2626; transition: all 0.15s; }
+.btn-icon-del:hover { background: #fef2f2; }
+
+.kpi-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 14px; margin-bottom: 22px; }
+.kpi-card { background: var(--navy); border-radius: var(--radius-lg); padding: 20px 22px; position: relative; overflow: hidden; }
+.kpi-card::after { content:''; position:absolute; width:80px; height:80px; border-radius:50%; background:var(--green-glow); bottom:-20px; right:-20px; }
+.kpi-card.alt { background: var(--navy-2); }
+.kpi-icon-wrap { width: 34px; height: 34px; background: rgba(255,255,255,0.08); border-radius: 8px; display: flex; align-items: center; justify-content: center; margin-bottom: 14px; }
+.kpi-icon-wrap svg { width: 17px; height: 17px; color: rgba(255,255,255,0.7); }
+.kpi-label { font-size: 10.5px; letter-spacing: 0.08em; text-transform: uppercase; color: rgba(255,255,255,0.45); margin-bottom: 6px; }
+.kpi-value { font-family: var(--font-d); font-size: 34px; font-weight: 700; color: #fff; line-height: 1; }
+.kpi-sub   { font-size: 11.5px; color: rgba(255,255,255,0.35); margin-top: 6px; }
+
+.chart-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 14px; }
+.chart-card { background: var(--surface); border-radius: var(--radius-lg); border: 1px solid var(--border); padding: 20px; }
+.chart-title { font-family: var(--font-d); font-size: 13.5px; font-weight: 600; margin-bottom: 3px; }
+.chart-sub   { font-size: 11.5px; color: var(--text-3); margin-bottom: 18px; }
+.bar-row { display: flex; align-items: center; gap: 8px; margin-bottom: 9px; }
+.bar-label { font-size: 12px; color: var(--text-2); flex: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.bar-track { flex: 0.8; height: 3px; background: var(--bg); border-radius: 99px; overflow: hidden; }
+.bar-fill  { height: 100%; background: var(--green); border-radius: 99px; }
+.bar-num   { font-size: 11.5px; color: var(--text-3); width: 52px; text-align: right; flex-shrink: 0; }
+
+.badge { display: inline-flex; align-items: center; justify-content: center; padding: 2px 9px; border-radius: 99px; font-size: 11px; font-weight: 600; }
+.b-pj  { background: #ede9fe; color: #5b21b6; }
+.b-clt { background: #dcfce7; color: #15803d; }
+.b-ter { background: #fef9c3; color: #854d0e; }
+.b-ativo   { background: #dcfce7; color: #15803d; }
+.b-inativo { background: #fee2e2; color: #991b1b; }
+.b-admin   { background: #dbeafe; color: #1d4ed8; }
+.b-gestor  { background: #fef9c3; color: #854d0e; }
+.b-nivel   { background: var(--bg); color: var(--text-3); border: 1px solid var(--border-2); }
+
+.table-wrap { background: var(--surface); border-radius: var(--radius-lg); border: 1px solid var(--border); overflow: hidden; }
+table { width: 100%; border-collapse: collapse; }
+thead th { padding: 9px 14px; font-size: 10.5px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: var(--text-3); background: var(--surface-2); border-bottom: 1px solid var(--border); text-align: left; }
+tbody tr { border-bottom: 1px solid var(--border); transition: background 0.1s; cursor: pointer; }
+tbody tr:last-child { border-bottom: none; }
+tbody tr:hover { background: var(--green-pale); }
+tbody td { padding: 11px 14px; font-size: 13px; vertical-align: middle; }
+.avatar { width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 600; color: #fff; flex-shrink: 0; }
+
+.filter-bar { display: flex; gap: 8px; margin-bottom: 14px; flex-wrap: wrap; }
+.filter-bar input, .filter-bar select { padding: 6px 11px; border-radius: var(--radius); border: 1px solid var(--border-2); font-size: 13px; background: var(--surface); color: var(--text-1); outline: none; font-family: var(--font-b); transition: border-color 0.15s; }
+.filter-bar input { flex: 1; min-width: 180px; }
+.filter-bar input:focus, .filter-bar select:focus { border-color: var(--green); }
+
+.form-sec { font-size: 10.5px; font-weight: 600; letter-spacing: 0.09em; text-transform: uppercase; color: var(--green); margin: 22px 0 12px; padding-bottom: 8px; border-bottom: 1px solid var(--green-glow); }
+.form-sec:first-child { margin-top: 0; }
+.form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 13px; }
+.form-grid.g3 { grid-template-columns: 1fr 1fr 1fr; }
+.form-group { display: flex; flex-direction: column; gap: 5px; }
+.form-group.s2 { grid-column: span 2; }
+.form-group.s3 { grid-column: span 3; }
+label { font-size: 10.5px; font-weight: 600; letter-spacing: 0.07em; text-transform: uppercase; color: var(--text-3); }
+input[type=text], input[type=email], input[type=date], input[type=number], input[type=tel], select, textarea { padding: 8px 10px; border-radius: var(--radius); border: 1px solid var(--border-2); font-size: 13px; color: var(--text-1); background: var(--surface); outline: none; width: 100%; font-family: var(--font-b); transition: border-color 0.15s, box-shadow 0.15s; }
+input:focus, select:focus, textarea:focus { border-color: var(--green); box-shadow: 0 0 0 3px var(--green-glow); }
+textarea { resize: vertical; min-height: 70px; }
+.salary-ind { margin-top: 5px; font-size: 11.5px; font-weight: 500; display: flex; align-items: center; gap: 4px; }
+.salary-ind.above { color: #16a34a; } .salary-ind.below { color: #dc2626; } .salary-ind.match { color: var(--text-3); }
+
+.modal-ov { display: none; position: fixed; inset: 0; background: rgba(10,20,28,0.55); backdrop-filter: blur(4px); z-index: 200; align-items: center; justify-content: center; padding: 20px; }
+.modal-ov.open { display: flex; }
+.modal { background: var(--surface); border-radius: var(--radius-xl); width: 100%; max-width: 680px; max-height: 90vh; overflow-y: auto; box-shadow: var(--shadow-lg); border: 1px solid var(--border); }
+.modal-hd { padding: 22px 24px 16px; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; }
+.modal-hd h2 { font-family: var(--font-d); font-size: 16px; font-weight: 600; }
+.modal-close { background: var(--surface-2); border: 1px solid var(--border); cursor: pointer; color: var(--text-3); width: 28px; height: 28px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 16px; transition: all 0.15s; }
+.modal-close:hover { color: var(--text-1); }
+.modal-body { padding: 22px 24px; }
+.modal-ft { padding: 14px 24px; border-top: 1px solid var(--border); display: flex; justify-content: flex-end; gap: 8px; }
+
+.carreira-legend { display: flex; gap: 18px; margin-bottom: 24px; }
+.legend-dot { display: flex; align-items: center; gap: 6px; font-size: 12px; color: var(--text-3); }
+.legend-dot span { width: 10px; height: 10px; border-radius: 3px; display: inline-block; }
+.carreira-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; max-width: 680px; margin: 0 auto; }
+.carreira-col { display: flex; flex-direction: column; gap: 8px; }
+.col-hd { font-size: 9.5px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; padding: 6px 12px; border-radius: var(--radius-sm); text-align: center; margin-bottom: 2px; }
+.c-node { padding: 10px 13px; border-radius: var(--radius); cursor: pointer; transition: opacity 0.15s, transform 0.1s; display: flex; justify-content: space-between; align-items: center; }
+.c-node:hover { opacity: 0.88; transform: translateX(2px); }
+.c-node.empty { opacity: 0.28; cursor: default; pointer-events: none; }
+.c-node-label { font-size: 11.5px; font-weight: 600; letter-spacing: 0.04em; text-transform: uppercase; }
+.c-node-badge { width: 20px; height: 20px; border-radius: 50%; background: rgba(255,255,255,0.25); color: #fff; font-size: 10px; font-weight: 700; display: flex; align-items: center; justify-content: center; }
+.n-ceo { background: var(--ceo); color: #fff; } .n-tech { background: var(--tech); color: #fff; } .n-tronco { background: var(--tronco); color: #fff; } .n-gestao { background: var(--gestao); color: #fff; }
+
+.org-ceo-row { display: flex; justify-content: center; margin-bottom: 22px; }
+.org-ceo-card { background: var(--ceo); color: #fff; padding: 13px 30px; border-radius: var(--radius-lg); text-align: center; }
+.org-ceo-name  { font-family: var(--font-d); font-size: 14px; font-weight: 600; }
+.org-ceo-title { font-size: 11.5px; opacity: 0.65; margin-top: 2px; }
+.org-areas { display: grid; grid-template-columns: repeat(auto-fit,minmax(190px,1fr)); gap: 10px; margin-bottom: 18px; }
+.org-area-card { border-radius: var(--radius-lg); padding: 14px 16px; cursor: pointer; transition: opacity 0.15s, transform 0.1s; }
+.org-area-card:hover { opacity: 0.88; transform: translateY(-1px); }
+.org-area-name  { font-size: 12.5px; font-weight: 600; color: #fff; }
+.org-area-count { font-size: 11.5px; color: rgba(255,255,255,0.6); margin-top: 2px; }
+.org-area-n { margin-top: 10px; font-family: var(--font-d); font-size: 22px; font-weight: 700; color: #fff; }
+.org-detail { background: var(--surface); border-radius: var(--radius-lg); border: 1px solid var(--border); padding: 20px; display: none; }
+.org-detail.open { display: block; }
+.org-detail-hd { display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; }
+.org-detail-title { font-size: 10.5px; font-weight: 600; letter-spacing: 0.09em; text-transform: uppercase; color: var(--text-3); }
+.org-detail-close { background: none; border: none; cursor: pointer; color: var(--text-3); font-size: 18px; }
+.org-member { display: flex; align-items: center; gap: 10px; padding: 9px 0; border-bottom: 1px solid var(--border); }
+.org-member:last-child { border-bottom: none; }
+.org-member-name { font-size: 13px; font-weight: 500; }
+.org-member-role { font-size: 11.5px; color: var(--text-3); }
+
+.folder-grid { display: grid; grid-template-columns: repeat(auto-fill,minmax(170px,1fr)); gap: 12px; }
+.folder-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 18px 16px; cursor: pointer; transition: all 0.15s; }
+.folder-card:hover { border-color: var(--green); box-shadow: 0 0 0 3px var(--green-glow); transform: translateY(-1px); }
+.folder-icon { font-size: 26px; margin-bottom: 10px; }
+.folder-name { font-size: 13px; font-weight: 500; }
+.folder-meta { font-size: 11.5px; color: var(--text-3); margin-top: 4px; }
+.empty-state { text-align: center; padding: 52px 20px; color: var(--text-3); font-size: 13.5px; }
+
+.toast-wrap { position: fixed; bottom: 20px; right: 20px; z-index: 500; display: flex; flex-direction: column; gap: 8px; }
+.toast { background: var(--navy); color: #fff; padding: 10px 16px; border-radius: var(--radius); font-size: 13px; font-weight: 500; box-shadow: var(--shadow-lg); animation: toastIn 0.2s ease; border: 1px solid rgba(255,255,255,0.08); }
+.toast.success { background: #14532d; } .toast.error { background: #7f1d1d; }
+@keyframes toastIn { from { opacity:0; transform:translateY(6px); } to { opacity:1; transform:translateY(0); } }
+</style>
+</head>
+<body>
+
+<nav id="sidebar">
+  <div class="sb-logo">
+    <div class="sb-logo-mark"><svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg></div>
+    <div><div class="sb-logo-name">QBem</div><div class="sb-logo-sub">Pessoas &amp; Cultura</div></div>
+  </div>
+  <div class="sb-nav">
+    <div class="sb-section">Menu</div>
+    <button class="nav-btn active" onclick="navigate('dashboard')">
+      <svg class="nb-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg>
+      Dashboard
+    </button>
+    <button class="nav-btn" onclick="navigate('colaboradores')">
+      <svg class="nb-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+      Colaboradores
+    </button>
+    <button class="nav-btn" onclick="navigate('cargos')">
+      <svg class="nb-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+      Cargos &amp; Salários
+    </button>
+    <button class="nav-btn" onclick="navigate('carreira')">
+      <svg class="nb-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="5" r="2"/><path d="M12 7v5M9 17H6a2 2 0 0 1-2-2v-3a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v3a2 2 0 0 1-2 2h-3"/><circle cx="9" cy="20" r="2"/><circle cx="15" cy="20" r="2"/></svg>
+      Carreira em Y
+    </button>
+    <button class="nav-btn" onclick="navigate('organograma')">
+      <svg class="nb-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="8" y="2" width="8" height="4" rx="1"/><rect x="2" y="14" width="8" height="4" rx="1"/><rect x="14" y="14" width="8" height="4" rx="1"/><path d="M12 6v4M6 14v-2a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v2"/></svg>
+      Organograma
+    </button>
+    <button class="nav-btn" onclick="navigate('documentos')">
+      <svg class="nb-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>
+      Documentos
+    </button>
+    <div class="sb-section">Admin</div>
+    <button class="nav-btn" onclick="navigate('usuarios')">
+      <svg class="nb-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+      Usuários
+    </button>
+  </div>
+  <div class="sb-user">
+    <div class="sb-avatar">Q</div>
+    <div><div class="sb-user-name">QBem P&amp;C</div><div class="sb-user-sub">Pessoas &amp; Cultura</div></div>
+  </div>
+</nav>
+
+<div id="main">
+  <div class="topbar">
+    <span class="topbar-link" onclick="navigate('dashboard')">QBem P&amp;C</span>
+    <span class="topbar-sep">›</span>
+    <span id="topbar-page" style="color:var(--text-2)">Dashboard</span>
+  </div>
+
+  <div class="page active" id="page-dashboard">
+    <div class="page-hd"><div><div class="page-title">Dashboard</div><div class="page-sub">Visão geral de Pessoas &amp; Cultura — QBem</div></div></div>
+    <div class="kpi-grid" id="dash-kpis"></div>
+    <div class="chart-grid" id="dash-charts"></div>
+  </div>
+
+  <div class="page" id="page-colaboradores">
+    <div class="page-hd">
+      <div><div class="page-title">Colaboradores</div><div class="page-sub" id="colab-count">— registros</div></div>
+      <button class="btn btn-primary" onclick="openColabModal()"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>Novo colaborador</button>
+    </div>
+    <div class="filter-bar">
+      <input type="text" id="f-cs" placeholder="Buscar nome, cargo, e-mail..." oninput="renderColabs()">
+      <select id="f-ca" onchange="renderColabs()"><option value="">Todas as áreas</option></select>
+      <select id="f-cn" onchange="renderColabs()"><option value="">Todas senioridades</option><option>CEO</option><option>Expert</option><option>Head</option><option>Gerente</option><option>Coordenador</option><option>Especialista Master</option><option>Especialista</option><option>Sênior</option><option>Pleno</option><option>Júnior</option><option>Assistente</option><option>Estagiário</option></select>
+      <select id="f-cc" onchange="renderColabs()"><option value="">Todos contratos</option><option>PJ</option><option>CLT</option><option>TERCEIRIZADO</option></select>
+      <select id="f-cst" onchange="renderColabs()"><option value="">Todos status</option><option>Ativo</option><option>Inativo</option></select>
+    </div>
+    <div class="table-wrap"><table><thead><tr><th>#</th><th>Nome</th><th>Cargo</th><th>Área</th><th>Contrato</th><th>Status</th><th>E-mail QBem</th></tr></thead><tbody id="colab-tbody"></tbody></table></div>
+  </div>
+
+  <div class="page" id="page-cargos">
+    <div class="page-hd">
+      <div><div class="page-title">Cargos &amp; Salários</div><div class="page-sub">Faixas salariais S1–S5 por cargo</div></div>
+      <button class="btn btn-primary" onclick="openCargoModal()"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>Novo cargo</button>
+    </div>
+    <div class="filter-bar">
+      <input type="text" id="f-gs" placeholder="Buscar cargo..." oninput="renderCargos()">
+      <select id="f-ga" onchange="renderCargos()"><option value="">Todas áreas</option></select>
+      <select id="f-gn" onchange="renderCargos()"><option value="">Todos níveis</option><option>Júnior</option><option>Pleno</option><option>Sênior</option><option>Especialista</option><option>Especialista Master</option><option>Expert</option><option>Head</option><option>Gerente</option><option>Coordenador</option><option>CEO</option></select>
+      <select id="f-gc" onchange="renderCargos()"><option value="">Todos contratos</option><option>PJ</option><option>CLT</option><option>TERCEIRIZADO</option></select>
+    </div>
+    <div class="table-wrap"><table><thead><tr><th>Cargo</th><th>Área</th><th>Nível</th><th>Contrato</th><th>S1</th><th>S2</th><th>S3</th><th>S4</th><th>S5</th><th></th></tr></thead><tbody id="cargo-tbody"></tbody></table></div>
+  </div>
+
+  <div class="page" id="page-carreira">
+    <div class="page-hd"><div><div class="page-title">Carreira em Y</div><div class="page-sub">Clique em um nível para ver os colaboradores</div></div></div>
+    <div class="carreira-legend"><div class="legend-dot"><span style="background:var(--tech)"></span>Técnica</div><div class="legend-dot"><span style="background:var(--tronco)"></span>Tronco</div><div class="legend-dot"><span style="background:var(--gestao)"></span>Gestão</div></div>
+    <div style="display:flex;justify-content:center;margin-bottom:14px"><div class="c-node n-ceo" style="width:190px;justify-content:center;gap:10px" onclick="showCarreiraLevel('CEO')"><span class="c-node-label">CEO</span><div class="c-node-badge" id="badge-CEO">0</div></div></div>
+    <div class="carreira-grid" id="carreira-grid"></div>
+  </div>
+
+  <div class="page" id="page-organograma">
+    <div class="page-hd"><div><div class="page-title">Organograma</div><div class="page-sub">Estrutura hierárquica da QBem — clique em uma área para expandir</div></div></div>
+    <div style="display:flex;gap:16px;margin-bottom:18px;font-size:11.5px;align-items:center;color:var(--text-3)">
+      <div style="display:flex;align-items:center;gap:5px"><span style="width:10px;height:10px;border-radius:2px;background:var(--ceo);display:inline-block"></span>CEO</div>
+      <div style="display:flex;align-items:center;gap:5px"><span style="width:10px;height:10px;border-radius:2px;background:var(--tech);display:inline-block"></span>Liderança</div>
+      <div style="display:flex;align-items:center;gap:5px"><span style="width:10px;height:10px;border-radius:2px;background:var(--tronco);display:inline-block"></span>Coordenação</div>
+      <div style="display:flex;align-items:center;gap:5px"><span style="width:10px;height:10px;border-radius:2px;background:var(--border-2);display:inline-block"></span>Colaborador</div>
+    </div>
+    <div id="org-wrap"></div>
+  </div>
+
+  <div class="page" id="page-documentos">
+    <div class="page-hd">
+      <div><div class="page-title">Documentos</div></div>
+      <button class="btn btn-ghost" onclick="openPastaModal()"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>Nova pasta</button>
+    </div>
+    <div id="docs-content"></div>
+  </div>
+
+  <div class="page" id="page-usuarios">
+    <div class="page-hd">
+      <div><div class="page-title">Usuários da Plataforma</div><div class="page-sub">Gestão de acessos e permissões</div></div>
+      <button class="btn btn-primary" onclick="openUserModal()"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>Novo usuário</button>
+    </div>
+    <div class="table-wrap" id="users-list"></div>
+  </div>
+</div>
+
+<div class="toast-wrap" id="toast-wrap"></div>
+
+<!-- MODAL: COLABORADOR -->
+<div class="modal-ov" id="modal-colab">
+  <div class="modal">
+    <div class="modal-hd"><h2 id="mc-title">Novo Colaborador</h2><button class="modal-close" onclick="closeModal('modal-colab')">×</button></div>
+    <div class="modal-body">
+      <input type="hidden" id="mc-id">
+      <div class="form-sec">Dados Pessoais</div>
+      <div class="form-grid">
+        <div class="form-group s2"><label>Nome Completo *</label><input type="text" id="mc-nome"></div>
+        <div class="form-group"><label>CPF</label><input type="text" id="mc-cpf"></div>
+        <div class="form-group"><label>Nascimento</label><input type="date" id="mc-nasc"></div>
+        <div class="form-group"><label>Telefone</label><input type="tel" id="mc-tel"></div>
+        <div class="form-group"><label>E-mail Pessoal</label><input type="email" id="mc-email-p"></div>
+      </div>
+      <div class="form-sec">Endereço</div>
+      <div class="form-grid">
+        <div class="form-group s2"><label>Logradouro</label><input type="text" id="mc-rua"></div>
+        <div class="form-group"><label>Número</label><input type="text" id="mc-num"></div>
+        <div class="form-group"><label>Bairro</label><input type="text" id="mc-bairro"></div>
+        <div class="form-group"><label>Cidade</label><input type="text" id="mc-cidade"></div>
+        <div class="form-group"><label>Estado</label><input type="text" id="mc-estado"></div>
+        <div class="form-group"><label>CEP</label><input type="text" id="mc-cep"></div>
+      </div>
+      <div class="form-sec">Cargo &amp; Contrato</div>
+      <div class="form-grid g3">
+        <div class="form-group s3"><label>Cargo</label><select id="mc-cargo" onchange="onCargoChange()"><option value="">Selecione...</option></select><div id="salary-ind" class="salary-ind" style="display:none"></div></div>
+        <div class="form-group"><label>Nível</label><select id="mc-nivel"><option>Júnior</option><option>Pleno</option><option>Sênior</option><option>Especialista</option><option>Especialista Master</option><option>Expert</option><option>Head</option><option>Gerente</option><option>Coordenador</option><option>CEO</option></select></div>
+        <div class="form-group"><label>Área</label><select id="mc-area"><option value="">Selecione...</option></select></div>
+        <div class="form-group"><label>E-mail QBem</label><input type="email" id="mc-email-q"></div>
+        <div class="form-group"><label>Contrato</label><select id="mc-contrato"><option>PJ</option><option>CLT</option><option>TERCEIRIZADO</option></select></div>
+        <div class="form-group"><label>Status</label><select id="mc-status"><option>Ativo</option><option>Inativo</option></select></div>
+        <div class="form-group"><label>Contratação</label><input type="date" id="mc-contratacao"></div>
+        <div class="form-group"><label>Desligamento</label><input type="date" id="mc-desligamento" onchange="onDesligamento()"></div>
+        <div class="form-group"><label>Remuneração (R$)</label><input type="number" id="mc-rem" oninput="onCargoChange()"></div>
+        <div class="form-group s3"><label>Subordinação Direta</label><select id="mc-sub"><option value="">Sem subordinação</option></select></div>
+        <div class="form-group s3"><label>Observações</label><textarea id="mc-obs"></textarea></div>
+      </div>
+    </div>
+    <div class="modal-ft"><button class="btn btn-ghost" onclick="closeModal('modal-colab')">Cancelar</button><button class="btn btn-primary" onclick="saveColab()">Salvar colaborador</button></div>
+  </div>
+</div>
+
+<!-- MODAL: CARGO -->
+<div class="modal-ov" id="modal-cargo">
+  <div class="modal" style="max-width:500px">
+    <div class="modal-hd"><h2 id="mcar-title">Novo Cargo</h2><button class="modal-close" onclick="closeModal('modal-cargo')">×</button></div>
+    <div class="modal-body">
+      <input type="hidden" id="mcar-id">
+      <div class="form-grid">
+        <div class="form-group s2"><label>Cargo *</label><input type="text" id="mcar-cargo"></div>
+        <div class="form-group"><label>Área</label><select id="mcar-area"><option value="">Selecione...</option></select></div>
+        <div class="form-group"><label>Nível</label><select id="mcar-nivel"><option>Júnior</option><option>Pleno</option><option>Sênior</option><option>Especialista</option><option>Especialista Master</option><option>Expert</option><option>Head</option><option>Gerente</option><option>Coordenador</option><option>CEO</option></select></div>
+        <div class="form-group"><label>Contrato</label><select id="mcar-contrato"><option>PJ</option><option>CLT</option><option>TERCEIRIZADO</option></select></div>
+        <div class="form-group"><label>S1 (R$)</label><input type="number" id="mcar-s1"></div>
+        <div class="form-group"><label>S2 (R$)</label><input type="number" id="mcar-s2"></div>
+        <div class="form-group"><label>S3 (R$)</label><input type="number" id="mcar-s3"></div>
+        <div class="form-group"><label>S4 (R$)</label><input type="number" id="mcar-s4"></div>
+        <div class="form-group"><label>S5 (R$)</label><input type="number" id="mcar-s5"></div>
+      </div>
+    </div>
+    <div class="modal-ft"><button class="btn btn-ghost" onclick="closeModal('modal-cargo')">Cancelar</button><button class="btn btn-primary" onclick="saveCargo()">Salvar cargo</button></div>
+  </div>
+</div>
+
+<!-- MODAL: PASTA -->
+<div class="modal-ov" id="modal-pasta">
+  <div class="modal" style="max-width:380px">
+    <div class="modal-hd"><h2>Nova Pasta</h2><button class="modal-close" onclick="closeModal('modal-pasta')">×</button></div>
+    <div class="modal-body"><div class="form-group"><label>Nome da pasta *</label><input type="text" id="mp-nome" placeholder="Ex: Contratos 2026"></div></div>
+    <div class="modal-ft"><button class="btn btn-ghost" onclick="closeModal('modal-pasta')">Cancelar</button><button class="btn btn-primary" onclick="savePasta()">Criar pasta</button></div>
+  </div>
+</div>
+
+<!-- MODAL: DOCUMENTO -->
+<div class="modal-ov" id="modal-doc">
+  <div class="modal" style="max-width:420px">
+    <div class="modal-hd"><h2>Novo Documento</h2><button class="modal-close" onclick="closeModal('modal-doc')">×</button></div>
+    <div class="modal-body">
+      <div class="form-group" style="margin-bottom:13px"><label>Nome *</label><input type="text" id="md-nome"></div>
+      <div class="form-group"><label>Link Google Drive *</label><input type="text" id="md-url" placeholder="https://drive.google.com/..."></div>
+    </div>
+    <div class="modal-ft"><button class="btn btn-ghost" onclick="closeModal('modal-doc')">Cancelar</button><button class="btn btn-primary" onclick="saveDoc()">Salvar</button></div>
+  </div>
+</div>
+
+<!-- MODAL: USUÁRIO -->
+<div class="modal-ov" id="modal-user">
+  <div class="modal" style="max-width:380px">
+    <div class="modal-hd"><h2>Novo Usuário</h2><button class="modal-close" onclick="closeModal('modal-user')">×</button></div>
+    <div class="modal-body">
+      <div class="form-group" style="margin-bottom:13px"><label>Nome *</label><input type="text" id="mu-nome"></div>
+      <div class="form-group" style="margin-bottom:13px"><label>E-mail *</label><input type="email" id="mu-email"></div>
+      <div class="form-group"><label>Perfil</label><select id="mu-perfil"><option value="gestor">Gestor</option><option value="admin">Admin</option></select></div>
+    </div>
+    <div class="modal-ft"><button class="btn btn-ghost" onclick="closeModal('modal-user')">Cancelar</button><button class="btn btn-primary" onclick="saveUser()">Criar usuário</button></div>
+  </div>
+</div>
+
+<!-- MODAL: CARREIRA LEVEL -->
+<div class="modal-ov" id="modal-cl">
+  <div class="modal" style="max-width:480px">
+    <div class="modal-hd"><h2 id="mcl-title">Colaboradores</h2><button class="modal-close" onclick="closeModal('modal-cl')">×</button></div>
+    <div id="mcl-body" style="padding:0"></div>
+  </div>
+</div>
+
+<!-- MODAL: CONFIRM -->
+<div class="modal-ov" id="modal-confirm">
+  <div class="modal" style="max-width:360px">
+    <div class="modal-hd"><h2>Confirmar exclusão</h2><button class="modal-close" onclick="closeModal('modal-confirm')">×</button></div>
+    <div class="modal-body"><p style="color:var(--text-2);font-size:13.5px;line-height:1.6" id="confirm-msg">Tem certeza? Esta ação não pode ser desfeita.</p></div>
+    <div class="modal-ft"><button class="btn btn-ghost" onclick="closeModal('modal-confirm')">Cancelar</button><button class="btn btn-danger-ghost" id="confirm-btn">Excluir</button></div>
+  </div>
+</div>
+
+<script>
+const SUPABASE_URL = 'https://jytylswcwztnhmowhool.supabase.co';
+const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imp5dHlsc3djd3p0bmhtb3dob29sIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk3MzI4MDYsImV4cCI6MjA5NTMwODgwNn0.3yk0kr7e6Qgshj50Mm_UMLq2e6OxXYX-Fg3lG0jjQww';
+const db = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+let colabsData=[], cargosData=[], pastasData=[], docsData=[], usersData=[];
+let currentPage='dashboard', currentPastaId=null;
+
+const AREAS=['Tecnologia & Dados','Produto & Operações','Pós-Venda & Implantação','Comercial & Expansão','Finanças, Pessoas & Governança'];
+const AREA_PARENT={'Pós-Venda & Implantação':'Produto & Operações'};
+const AREA_COLORS={'Tecnologia & Dados':'#0d5c3a','Produto & Operações':'#065f6b','Pós-Venda & Implantação':'#0c4a6e','Comercial & Expansão':'#7c2d12','Finanças, Pessoas & Governança':'#3b0764'};
+const AV=['#065f6b','#0d5c3a','#7c2d12','#5b21b6','#0c4a6e','#1e3a5f','#713f12','#4a044e'];
+
+function avatarColor(n){let h=0;for(let c of(n||''))h=(h*31+c.charCodeAt(0))&0xffff;return AV[h%AV.length];}
+function initials(n){const p=(n||'').trim().split(' ').filter(Boolean);if(!p.length)return'?';return p.length===1?p[0][0].toUpperCase():(p[0][0]+p[p.length-1][0]).toUpperCase();}
+function fmtR(v){if(v==null||v==='')return'—';return'R$'+Number(v).toLocaleString('pt-BR');}
+function bC(c){const m={PJ:'b-pj',CLT:'b-clt',TERCEIRIZADO:'b-ter'};return`<span class="badge ${m[c]||''}">${c||'—'}</span>`;}
+function bS(s){return`<span class="badge ${s==='Ativo'?'b-ativo':'b-inativo'}">${s||'—'}</span>`;}
+function g(id){const e=document.getElementById(id);return e?e.value:'';}
+function s(id,val){const e=document.getElementById(id);if(e)e.value=val??'';}
+
+async function loadAll(){
+  const [e,p,pa,d,u]=await Promise.all([
+    db.from('employees').select('*').order('full_name'),
+    db.from('positions').select('*').order('title'),
+    db.from('pastas').select('*').order('nome'),
+    db.from('documentos').select('*').order('nome'),
+    db.from('usuarios').select('*').order('nome')
+  ]);
+  colabsData=e.data||[];cargosData=p.data||[];pastasData=pa.data||[];docsData=d.data||[];usersData=u.data||[];
+  populateSelects();renderPage(currentPage);
+}
+
+function populateSelects(){
+  ['f-ca','f-ga','mc-area','mcar-area'].forEach(id=>{
+    const el=document.getElementById(id);if(!el)return;
+    const v=el.value,f=el.options[0].outerHTML;
+    el.innerHTML=f;AREAS.forEach(a=>el.appendChild(new Option(a,a)));if(v)el.value=v;
+  });
+  const fc=document.getElementById('mc-cargo');
+  const cv=fc.value;fc.innerHTML='<option value="">Selecione...</option>';
+  const seen=new Set();
+  cargosData.forEach(c=>{if(!seen.has(c.title)){seen.add(c.title);fc.appendChild(new Option(c.title,c.title));}});
+  if(cv)fc.value=cv;
+  const fs=document.getElementById('mc-sub');
+  const sv=fs.value;fs.innerHTML='<option value="">Sem subordinação</option>';
+  colabsData.forEach(c=>fs.appendChild(new Option(`${c.full_name} — ${c.position_title||''}`,c.id)));
+  if(sv)fs.value=sv;
+}
+
+const PAGE_LABELS={dashboard:'Dashboard',colaboradores:'Colaboradores',cargos:'Cargos & Salários',carreira:'Carreira em Y',organograma:'organograma',documentos:'Documentos',usuarios:'Usuários'};
+
+function navigate(page){
+  currentPage=page;
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.nav-btn').forEach(n=>n.classList.remove('active'));
+  document.getElementById(`page-${page}`).classList.add('active');
+  document.querySelectorAll('.nav-btn').forEach(n=>{if(n.getAttribute('onclick')?.includes(`'${page}'`))n.classList.add('active');});
+  document.getElementById('topbar-page').textContent=PAGE_LABELS[page]||page;
+  renderPage(page);
+}
+
+function renderPage(page){
+  if(page==='dashboard')renderDashboard();
+  else if(page==='colaboradores')renderColabs();
+  else if(page==='cargos')renderCargos();
+  else if(page==='carreira')renderCarreira();
+  else if(page==='organograma')renderOrganograma();
+  else if(page==='documentos')renderDocumentos();
+  else if(page==='usuarios')renderUsuarios();
+}
+
+function renderDashboard(){
+  const ativos=colabsData.filter(c=>c.status==='Ativo');
+  document.getElementById('dash-kpis').innerHTML=`
+    <div class="kpi-card">
+      <div class="kpi-icon-wrap"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg></div>
+      <div class="kpi-label">Total Colaboradores</div><div class="kpi-value">${colabsData.length}</div><div class="kpi-sub">Todos os registros</div>
+    </div>
+    <div class="kpi-card alt">
+      <div class="kpi-icon-wrap"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></div>
+      <div class="kpi-label">Ativos</div><div class="kpi-value">${ativos.length}</div><div class="kpi-sub">Em atividade agora</div>
+    </div>`;
+  const mk=(title,sub,data,total)=>{
+    const rows=Object.entries(data).sort((a,b)=>b[1]-a[1]).map(([l,n])=>{const pct=Math.round(n/total*100);return`<div class="bar-row"><div class="bar-label">${l}</div><div class="bar-track"><div class="bar-fill" style="width:${pct}%"></div></div><div class="bar-num">${n} (${pct}%)</div></div>`;}).join('');
+    return`<div class="chart-card"><div class="chart-title">${title}</div><div class="chart-sub">${sub}</div>${rows}</div>`;
+  };
+  const byA={},byC={},byN={};
+  ativos.forEach(c=>{if(c.area)byA[c.area]=(byA[c.area]||0)+1;if(c.contract_type)byC[c.contract_type]=(byC[c.contract_type]||0)+1;if(c.position_level)byN[c.position_level]=(byN[c.position_level]||0)+1;});
+  const t=ativos.length||1;
+  document.getElementById('dash-charts').innerHTML=mk('Colaboradores por Área','Headcount ativo por área',byA,t)+mk('Distribuição por Contrato','CLT · PJ · Estágio',byC,t)+mk('Colaboradores por Senioridade','Distribuição por nível',byN,t);
+}
+
+function renderColabs(){
+  const sr=g('f-cs').toLowerCase(),a=g('f-ca'),n=g('f-cn'),c=g('f-cc'),st=g('f-cst');
+  const data=colabsData.filter(x=>{
+    if(sr&&!`${x.full_name} ${x.position_title} ${x.qbem_email}`.toLowerCase().includes(sr))return false;
+    if(a&&x.area!==a)return false;if(n&&x.position_level!==n)return false;
+    if(c&&x.contract_type!==c)return false;if(st&&x.status!==st)return false;return true;
+  });
+  document.getElementById('colab-count').textContent=`${data.length} registros`;
+  const tbody=document.getElementById('colab-tbody');
+  if(!data.length){tbody.innerHTML='<tr><td colspan="7" class="empty-state">Nenhum colaborador encontrado.</td></tr>';return;}
+  tbody.innerHTML=data.map((c,i)=>`
+    <tr onclick='openColabModal(${JSON.stringify(c)})'>
+      <td style="color:var(--text-3);font-size:12px">${i+1}</td>
+      <td><div style="display:flex;align-items:center;gap:10px"><div class="avatar" style="background:${avatarColor(c.full_name)}">${initials(c.full_name)}</div><span style="font-weight:500">${c.full_name}</span></div></td>
+      <td><div>${c.position_title||'—'}</div>${c.position_level?`<div style="font-size:11px;color:var(--green);font-weight:500;margin-top:1px">${c.position_level}</div>`:''}</td>
+      <td style="color:var(--green);font-size:12.5px">${c.area||'—'}</td>
+      <td>${bC(c.contract_type)}</td><td>${bS(c.status||'Ativo')}</td>
+      <td style="color:var(--text-3);font-size:12.5px">${c.qbem_email||'—'}</td>
+    </tr>`).join('');
+}
+
+function openColabModal(c){
+  document.getElementById('mc-title').textContent=c?'Editar Colaborador':'Novo Colaborador';
+  s('mc-id',c?.id);s('mc-nome',c?.full_name);s('mc-cpf',c?.cpf);s('mc-nasc',c?.birth_date);
+  s('mc-tel',c?.phone);s('mc-email-p',c?.personal_email);s('mc-rua',c?.address_street);
+  s('mc-num',c?.address_number);s('mc-bairro',c?.address_neighborhood);s('mc-cidade',c?.address_city);
+  s('mc-estado',c?.address_state);s('mc-cep',c?.address_zip);s('mc-email-q',c?.qbem_email);
+  s('mc-contratacao',c?.hire_date);s('mc-desligamento',c?.termination_date);
+  s('mc-rem',c?.salary);s('mc-obs',c?.notes);s('mc-cargo',c?.position_title);
+  s('mc-nivel',c?.position_level);s('mc-area',c?.area);s('mc-contrato',c?.contract_type);
+  s('mc-status',c?.status||'Ativo');s('mc-sub',c?.reports_to);
+  document.getElementById('salary-ind').style.display='none';
+  if(c?.position_title&&c?.salary)onCargoChange();
+  openModal('modal-colab');
+}
+
+async function saveColab(){
+  const nome=g('mc-nome').trim();if(!nome){toast('Nome é obrigatório.','error');return;}
+  const id=g('mc-id'),des=g('mc-desligamento');
+  const payload={full_name:nome,cpf:g('mc-cpf')||null,birth_date:g('mc-nasc')||null,phone:g('mc-tel')||null,personal_email:g('mc-email-p')||null,address_street:g('mc-rua')||null,address_number:g('mc-num')||null,address_neighborhood:g('mc-bairro')||null,address_city:g('mc-cidade')||null,address_state:g('mc-estado')||null,address_zip:g('mc-cep')||null,position_title:g('mc-cargo')||null,position_level:g('mc-nivel')||null,area:g('mc-area')||null,qbem_email:g('mc-email-q')||null,contract_type:g('mc-contrato')||null,status:des?'Inativo':g('mc-status'),hire_date:g('mc-contratacao')||null,termination_date:des||null,salary:parseFloat(g('mc-rem'))||null,reports_to:g('mc-sub')||null,notes:g('mc-obs')||null};
+  const{error}=id?await db.from('employees').update(payload).eq('id',id):await db.from('employees').insert(payload);
+  if(error){toast('Erro: '+error.message,'error');return;}
+  toast('Colaborador salvo!','success');closeModal('modal-colab');await loadAll();
+}
+
+function onDesligamento(){if(g('mc-desligamento'))s('mc-status','Inativo');}
+function onCargoChange(){
+  const cn=g('mc-cargo'),rem=parseFloat(g('mc-rem')),ind=document.getElementById('salary-ind');
+  if(!cn){ind.style.display='none';return;}
+  const cargo=cargosData.find(c=>c.title===cn);
+  if(!cargo?.s3_salary){ind.style.display='none';return;}
+  if(!rem||isNaN(rem)){ind.style.display='none';return;}
+  const s3=parseFloat(cargo.s3_salary),diff=rem-s3;
+  ind.style.display='flex';
+  if(Math.abs(diff)<1){ind.className='salary-ind match';ind.textContent=`✓ Na faixa S3 (${fmtR(s3)})`;}
+  else if(diff>0){ind.className='salary-ind above';ind.textContent=`▲ ${fmtR(diff)} acima do S3 (ref: ${fmtR(s3)})`;}
+  else{ind.className='salary-ind below';ind.textContent=`▼ ${fmtR(Math.abs(diff))} abaixo do S3 (ref: ${fmtR(s3)})`;}
+}
+
+function renderCargos(){
+  const sr=g('f-gs').toLowerCase(),a=g('f-ga'),n=g('f-gn'),c=g('f-gc');
+  const data=cargosData.filter(x=>{if(sr&&!x.title.toLowerCase().includes(sr))return false;if(a&&x.area!==a)return false;if(n&&x.level!==n)return false;if(c&&x.contract_type!==c)return false;return true;});
+  const tbody=document.getElementById('cargo-tbody');
+  if(!data.length){tbody.innerHTML='<tr><td colspan="10" class="empty-state">Nenhum cargo encontrado.</td></tr>';return;}
+  tbody.innerHTML=data.map(c=>`<tr><td style="font-weight:500">${c.title}</td><td style="color:var(--green);font-size:12.5px">${c.area||'—'}</td><td style="color:var(--text-2)">${c.level||'—'}</td><td>${bC(c.contract_type)}</td><td style="color:var(--text-3)">${fmtR(c.s1_salary)}</td><td style="color:var(--text-3)">${fmtR(c.s2_salary)}</td><td style="font-weight:600">${fmtR(c.s3_salary)}</td><td style="color:var(--text-3)">${fmtR(c.s4_salary)}</td><td style="color:var(--text-3)">${fmtR(c.s5_salary)}</td><td><div style="display:flex;gap:5px"><button class="btn-icon-sm" onclick="event.stopPropagation();openCargoModal(${JSON.stringify(c).replace(/"/g,'&quot;')})">✎</button><button class="btn-icon-del" onclick="event.stopPropagation();confirmDelete('positions','${c.id}','Excluir cargo?')">✕</button></div></td></tr>`).join('');
+}
+
+function openCargoModal(c){
+  document.getElementById('mcar-title').textContent=c?'Editar Cargo':'Novo Cargo';
+  s('mcar-id',c?.id);s('mcar-cargo',c?.title);s('mcar-area',c?.area);s('mcar-nivel',c?.level);s('mcar-contrato',c?.contract_type);
+  s('mcar-s1',c?.s1_salary);s('mcar-s2',c?.s2_salary);s('mcar-s3',c?.s3_salary);s('mcar-s4',c?.s4_salary);s('mcar-s5',c?.s5_salary);
+  openModal('modal-cargo');
+}
+
+async function saveCargo(){
+  const title=g('mcar-cargo').trim();if(!title){toast('Nome obrigatório.','error');return;}
+  const id=g('mcar-id');
+  const payload={title,area:g('mcar-area')||null,level:g('mcar-nivel')||null,contract_type:g('mcar-contrato')||null,s1_salary:parseFloat(g('mcar-s1'))||null,s2_salary:parseFloat(g('mcar-s2'))||null,s3_salary:parseFloat(g('mcar-s3'))||null,s4_salary:parseFloat(g('mcar-s4'))||null,s5_salary:parseFloat(g('mcar-s5'))||null};
+  const{error}=id?await db.from('positions').update(payload).eq('id',id):await db.from('positions').insert(payload);
+  if(error){toast('Erro: '+error.message,'error');return;}
+  toast('Cargo salvo!','success');closeModal('modal-cargo');await loadAll();
+}
+
+function renderCarreira(){
+  const cnt=nivel=>colabsData.filter(c=>c.position_level===nivel&&c.status==='Ativo').length;
+  document.getElementById('badge-CEO').textContent=cnt('CEO');
+  const techN=['Expert','Especialista Master','Especialista'];
+  const troncoM=[['Analista Sênior','Sênior'],['Analista Pleno','Pleno'],['Analista Júnior','Júnior'],['Assistente','Assistente'],['Estagiário','Estagiário']];
+  const gestaoN=['Head','Gerente','Coordenador'];
+  const node=(label,cls,nivel)=>{const n=cnt(nivel);return`<div class="c-node ${cls} ${n===0?'empty':''}" onclick="showCarreiraLevel('${nivel}')"><span class="c-node-label">${label}</span><div class="c-node-badge">${n}</div></div>`;};
+  document.getElementById('carreira-grid').innerHTML=`
+    <div class="carreira-col"><div class="col-hd" style="background:rgba(13,92,58,0.1);color:var(--tech)">&lt;/&gt; Técnico</div>${techN.map(n=>node(n,'n-tech',n)).join('')}</div>
+    <div class="carreira-col"><div class="col-hd" style="color:transparent">—</div>${troncoM.map(([l,n])=>node(l,'n-tronco',n)).join('')}</div>
+    <div class="carreira-col"><div class="col-hd" style="background:rgba(124,45,18,0.1);color:var(--gestao)">Gestão</div>${gestaoN.map(n=>node(n,'n-gestao',n)).join('')}</div>`;
+}
+
+function showCarreiraLevel(nivel){
+  const colabs=colabsData.filter(c=>c.position_level===nivel&&c.status==='Ativo');
+  document.getElementById('mcl-title').textContent=`${nivel} — ${colabs.length} colaborador${colabs.length!==1?'es':''}`;
+  document.getElementById('mcl-body').innerHTML=colabs.length?colabs.map(c=>`<div class="org-member" style="padding:13px 22px"><div class="avatar" style="background:${avatarColor(c.full_name)}">${initials(c.full_name)}</div><div style="flex:1"><div class="org-member-name">${c.full_name}</div><div class="org-member-role">${c.position_title||''} · ${c.area||''}</div></div>${bC(c.contract_type)}</div>`).join(''):'<div class="empty-state">Nenhum colaborador neste nível.</div>';
+  openModal('modal-cl');
+}
+
+function renderOrganograma(){
+  const ceo=colabsData.find(c=>c.position_level==='CEO');
+  const mainAreas=['Tecnologia & Dados','Produto & Operações','Comercial & Expansão','Finanças, Pessoas & Governança'];
+  const areaCards=mainAreas.map(area=>{const membros=colabsData.filter(c=>c.area===area||AREA_PARENT[c.area]===area);return`<div class="org-area-card" style="background:${AREA_COLORS[area]}" onclick="toggleOrgDetail('${area.replace(/'/g,"\\'")}')"><div class="org-area-n">${membros.length}</div><div class="org-area-name">${area}</div><div class="org-area-count">${membros.length} colaboradores</div></div>`;}).join('');
+  document.getElementById('org-wrap').innerHTML=`<div class="org-ceo-row"><div class="org-ceo-card"><div class="org-ceo-name">${ceo?.full_name||'CEO'}</div><div class="org-ceo-title">${ceo?.position_title||'CEO / Sócio'}</div></div></div><div class="org-areas">${areaCards}</div><div class="org-detail" id="org-detail"></div>`;
+}
+
+function toggleOrgDetail(area){
+  const d=document.getElementById('org-detail');
+  if(d.dataset.area===area&&d.classList.contains('open')){d.classList.remove('open');d.dataset.area='';return;}
+  d.dataset.area=area;
+  const membros=colabsData.filter(c=>c.area===area||AREA_PARENT[c.area]===area);
+  const liderN=['Expert','Especialista Master','Head','Gerente'];
+  const lider=membros.filter(c=>liderN.includes(c.position_level));
+  const equipe=membros.filter(c=>!liderN.includes(c.position_level));
+  const mH=c=>`<div class="org-member"><div class="avatar" style="background:${avatarColor(c.full_name)};width:34px;height:34px;font-size:11px">${initials(c.full_name)}</div><div style="flex:1"><div class="org-member-name">${c.full_name}</div><div class="org-member-role">${c.position_title||''}</div></div><span class="badge b-nivel">${c.position_level||''}</span></div>`;
+  d.innerHTML=`<div class="org-detail-hd"><div class="org-detail-title">${area.toUpperCase()}</div><button class="org-detail-close" onclick="document.getElementById('org-detail').classList.remove('open')">×</button></div>${lider.length?`<div style="font-size:10px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--text-3);margin-bottom:8px">Liderança</div>${lider.map(mH).join('')}`:''}${equipe.length?`<div style="font-size:10px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--text-3);margin:12px 0 8px">Equipe</div>${equipe.map(mH).join('')}`:''}`;
+  d.classList.add('open');
+}
+
+function renderDocumentos(){
+  currentPastaId=null;
+  const c=document.getElementById('docs-content');
+  if(!pastasData.length){c.innerHTML='<div class="empty-state"><div style="font-size:36px;margin-bottom:10px;opacity:.5">📁</div><div style="font-weight:500;font-size:14px;margin-bottom:4px">Nenhuma pasta criada</div><div>Clique em "Nova pasta" para começar.</div></div>';return;}
+  c.innerHTML='<div class="folder-grid">'+pastasData.map(p=>{const n=docsData.filter(d=>d.pasta_id===p.id).length;return`<div class="folder-card" onclick="openPasta('${p.id}','${p.nome.replace(/'/g,"\\'")}')"><div class="folder-icon">📁</div><div class="folder-name">${p.nome}</div><div class="folder-meta">${n} documento${n!==1?'s':''}</div></div>`;}).join('')+'</div>';
+}
+
+function openPasta(pid,pnome){
+  currentPastaId=pid;
+  const docs=docsData.filter(d=>d.pasta_id===pid);
+  document.getElementById('docs-content').innerHTML=`<div style="display:flex;align-items:center;gap:10px;margin-bottom:18px"><button class="btn btn-ghost btn-sm" onclick="renderDocumentos()">← Voltar</button><span style="font-size:15px;font-weight:500">📁 ${pnome}</span><button class="btn btn-primary btn-sm" style="margin-left:auto" onclick="openDocModal()">+ Documento</button><button class="btn btn-danger-ghost btn-sm" onclick="confirmDelete('pastas','${pid}','Excluir pasta e todos os seus documentos?')">Excluir pasta</button></div>${!docs.length?'<div class="empty-state">Nenhum documento nesta pasta.</div>':`<div class="table-wrap"><table><thead><tr><th>Nome</th><th>Link</th><th style="width:50px"></th></tr></thead><tbody>${docs.map(d=>`<tr><td style="font-weight:500">📄 ${d.nome}</td><td><a href="${d.url_drive}" target="_blank" style="color:var(--green);font-size:13px">Abrir no Drive ↗</a></td><td><button class="btn-icon-del" onclick="confirmDelete('documentos','${d.id}','Excluir documento?')">✕</button></td></tr>`).join('')}</tbody></table></div>`}`;
+}
+
+function openPastaModal(){s('mp-nome','');openModal('modal-pasta');}
+async function savePasta(){const nome=g('mp-nome').trim();if(!nome){toast('Nome é obrigatório.','error');return;}const{error}=await db.from('pastas').insert({nome});if(error){toast('Erro: '+error.message,'error');return;}toast('Pasta criada!','success');closeModal('modal-pasta');await loadAll();}
+function openDocModal(){s('md-nome','');s('md-url','');openModal('modal-doc');}
+async function saveDoc(){const nome=g('md-nome').trim(),url=g('md-url').trim();if(!nome||!url){toast('Nome e URL são obrigatórios.','error');return;}const{error}=await db.from('documentos').insert({nome,url_drive:url,pasta_id:currentPastaId});if(error){toast('Erro: '+error.message,'error');return;}toast('Documento salvo!','success');closeModal('modal-doc');await loadAll();const p=pastasData.find(p=>p.id===currentPastaId);if(p)openPasta(currentPastaId,p.nome);}
+
+function renderUsuarios(){document.getElementById('users-list').innerHTML=usersData.length?usersData.map(u=>`<div style="display:flex;align-items:center;gap:12px;padding:13px 16px;border-bottom:1px solid var(--border)"><div class="avatar" style="background:${avatarColor(u.nome||u.email)}">${initials(u.nome||u.email||'U')}</div><div style="flex:1"><div style="font-weight:500;font-size:13.5px">${u.nome||'—'}</div><div style="font-size:12.5px;color:var(--text-3)">${u.email}</div></div><span class="badge ${u.perfil==='admin'?'b-admin':'b-gestor'}">${u.perfil==='admin'?'Admin':'Gestor'}</span></div>`).join(''):'<div class="empty-state">Nenhum usuário cadastrado.</div>';}
+function openUserModal(){s('mu-nome','');s('mu-email','');s('mu-perfil','gestor');openModal('modal-user');}
+async function saveUser(){const nome=g('mu-nome').trim(),email=g('mu-email').trim(),perfil=g('mu-perfil');if(!nome||!email){toast('Preencha nome e e-mail.','error');return;}const{error}=await db.from('usuarios').insert({nome,email,perfil});if(error){toast('Erro: '+error.message,'error');return;}toast('Usuário criado!','success');closeModal('modal-user');await loadAll();}
+
+function confirmDelete(table,id,msg){document.getElementById('confirm-msg').textContent=msg||'Confirmar exclusão?';document.getElementById('confirm-btn').onclick=async()=>{const{error}=await db.from(table).delete().eq('id',id);if(error){toast('Erro: '+error.message,'error');return;}toast('Excluído.','success');closeModal('modal-confirm');await loadAll();};openModal('modal-confirm');}
+
+function openModal(id){document.getElementById(id).classList.add('open');}
+function closeModal(id){document.getElementById(id).classList.remove('open');}
+document.querySelectorAll('.modal-ov').forEach(o=>o.addEventListener('click',e=>{if(e.target===o)o.classList.remove('open');}));
+
+function toast(msg,type=''){const e=document.createElement('div');e.className=`toast ${type}`;e.textContent=msg;document.getElementById('toast-wrap').appendChild(e);setTimeout(()=>e.remove(),3500);}
+
+loadAll();
+</script>
+</body>
+</html>
